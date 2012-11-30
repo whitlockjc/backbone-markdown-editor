@@ -1,0 +1,5 @@
+# ---------------------------------------------------------
+# Backbone.js Markdown Editor Project Root
+# ---------------------------------------------------------
+projectDirectory = "$CWD"
+windowTitle      = "$TM_DISPLAYNAME — ${CWD/^.*\///}"
