@@ -21,6 +21,18 @@ also welcome the help.  While there are a handle of things I'd do different if I
 this for public consumption, I still think this project is a good starting point and could be turned into
 something useful.
 
+### Using
+To run this application, after cloning run the following in the root of the cloned repository:
+
+```
+$ npm install
+// This will install the application dependencies
+$ npm start
+// This will start the Express server listening on port 3000
+```
+
+After the server is running, visit [http://localhost:3000](http://localhost:3000) in your browser.
+
 ### Software Used
 Below is a list of softwares used in this project:
 
