@@ -1,0 +1,91 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Backbone.js Markdown Editor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Example application using Backbone.js to create a Markdown editor.">
+    <meta name="author" content="Jeremy Whitlock <jcscoobyrs@gmail.com>">
+
+    <!-- Styles -->
+    <link href="components/bootstrap/css/bootstrap.css" rel="stylesheet">
+    <link href="components/bootstrap/css/bootstrap-responsive.css" rel="stylesheet">
+    <link href="css/backbone-markdown-editor.css" rel="stylesheet">
+    <link href="components/google-code-prettify/styles/sunburst.css" rel="stylesheet">
+
+    <!-- HTML5 shim for IE6-8 -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container-fluid">
+          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </a>
+          <a class="brand" href="#" id="list-files">Backbone.js Markdown Editor</a>
+          <ul class="nav">
+            <li><a href="#files/new" id="new-file">New File</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid" id="content">
+      <div class="row-fluid">
+        <div class="span2" id="sidebar">
+          <div class="well sidebar-nav">
+            <!-- Contents loaded from Backbone.js using id-based DOM access -->
+            <ul class="nav nav-list" id="files-list"></ul>
+          </div>
+        </div>
+        <!-- Contents loaded from Backbone.js using Backbone.js created DOM element -->
+      </div>
+    </div>
+
+    <!-- Templates -->
+    <script type="text/template" id="editor-template">
+      <div class="row-fluid">
+        <div class="span6" id="editor-pane">
+          <form class="form-horizontal">
+            <div class="control-group">
+              <input type="text" class="span12" id="file-name" placeholder="Name" disabled="disabled"></input>
+            </div>
+            <div class="control-group">
+              <input type="text" class="span12" id="file-description" placeholder="Description" disabled="disabled"></input>
+            </div>
+            <div class="control-group">
+              <div class="btn-group pull-right">
+                <a class="btn btn-mini" id="revert-file">Revert</a>
+                <a class="btn btn-mini" id="delete-file">Delete</a>
+                <a class="btn btn-mini" id="save-file">Save</a>
+              </div>
+              <span class="alert alert-error hide" id="error-message"></span>
+            </div>
+            <div class="control-group">
+              <textarea class="span12" disabled="disabled" id="file-content"></textarea>
+            </div>
+          </form>
+        </div>
+        <div class="span6 well" id="preview-pane"></div>
+      </div>
+    </script>
+
+    <!-- Scripts (Placed at the end of the document so the page loads faster) -->
+    <script src="components/jquery/jquery.js"></script>
+    <script src="components/bootstrap/js/bootstrap.js"></script>
+    <script src="components/underscore/underscore.js"></script>
+    <script src="components/backbone/backbone.js"></script>
+    <script src="components/marked/marked.js"></script>
+    <script src="components/google-code-prettify/src/prettify.js"></script>
+    <script src="js/backbone-markdown-editor.js"></script>
+
+  </body>
+</html>

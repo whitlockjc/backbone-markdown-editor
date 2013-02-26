@@ -15,33 +15,51 @@ fs = require('fs')
 _ = require('underscore')
 # Create the Express.js application
 app = express()
-# Helper function to read the index.html shim file in as a string
-readIndexHTML = ->
-  fs.readFileSync __dirname + '/public/html/index.html', 'utf8'
-# Since this application is a client-side, single-page application, all that is necessary is to return the HTML5 shim
-# that loads up all of the client-side resources.  This shim is loaded into a variable for performance reasons.
-indexHTMLShim = readIndexHTML()
+# Application variables
 savedFiles = {}
 lastId = 0
+# Function that returns if the file, based on its name, is a duplicate
+isDuplicateFile = (newFile) ->
+  (_.find savedFiles, (file) -> newFile.name? and newFile.name is file.name)?
+# Function that handles when there is a duplicate file attempting to be created/updated
+handleDuplicate = (res, file) ->
+  res.json 405, {
+    error:
+      message: "File already exists with the name of '#{file.name}'."
+  }
+# Function that returns if the file is valid
+isValidFile = (file) ->
+  file.name? and file.content? and not _.isEmpty file.name
+# Function that handles when there is an invalid file attempting to be created/updated
+handleInvalidFile = (res, file) ->
+  badFields = {}
+  for field in ['name', 'content']
+    if not file[field]? or (field is 'name' and _.isEmpty(file[field]))
+      res.json 405, {error: {message: "'#{field}' is a required field."}}
+      return
+# Function that handles when there is a file requested that doesn't exist
+handleFileNotFound = (fileId) ->
+  res.json 404, {error: {message: "No saved file on the server with an id of #{fileId}."}}
 
 # Configure Express.js (This is not a production-ready environment.)
 app.configure ->
   app.set 'port', process.env.PORT or 3000
   # Turn off layout processing since we'll not be using it
   app.set 'view options', {layout: false}
+  # Use Express.js' favicon
   app.use express.favicon()
+  # Use Express.js features for processing content from the client
   app.use express.bodyParser()
+  # Use the Express.js router
   app.use app.router
+  # Use Express.js features for serving the web-based client
   app.use express.static(path.join(__dirname, 'public'))
+  # Set Express.js logger to 'dev' level
   app.use express.logger('dev')
+  # Use the Express.js error handler to allow for custom error responses
   app.use express.errorHandler()
 
 # ##Routes
-
-# The single route for the UI of our application
-app.get '/', (req, res) ->
-  # In development mode, always reread the file from disk to handle changes to the file, othewise use the variable
-  res.send if app.settings?.env is 'development' then readIndexHTML() else indexHTMLShim
 
 # Route to get a list of saved files
 app.get '/files', (req, res) ->
@@ -50,54 +68,38 @@ app.get '/files', (req, res) ->
 # Route to create a saved file
 app.post '/files', (req, res) ->
   newFile = req.body
-  # Validate if it's a duplicate (by name)
-  dup = _.find savedFiles, (file) -> return file.name? and file.name is newFile.name
 
-  if dup
-    res.json 405, {error: {
-      message: "File already exists with the name of '#{newFile.name}'."
-    }}
+  if isDuplicateFile newFile
+    handleDuplicate newFile
   else
-    if newFile.name? and newFile.content? and not _.isEmpty newFile.name
+    if isValidFile newFile
       newFile['id'] = lastId += 1
       newFile['created'] = new Date()
       savedFiles[newFile.id] = newFile
       res.json newFile
     else
-      badFields = {}
-      for field in ['name', 'content']
-        if not newFile[field]? or (field is 'name' and _.isEmpty(newFile[field]))
-          res.json 405, {error: {message: "'#{field}' is a required field."}}
-          return
+      handleInvalidFile newFile
 
 # Route to get a saved file by id
 app.get '/files/:id', (req, res) ->
   fileId = req.params.id
-  if _.has savedFiles, fileId then res.json(savedFiles[fileId]) else res.json 404, {error: {message: "No saved file on the server with an id of #{fileId}."}}
+  if _.has savedFiles, fileId then res.json(savedFiles[fileId]) else handleFileNotFound(fileId)
 
 # Route to update a saved file by id
 app.put '/files/:id', (req, res) ->
   fileId = req.params.id
   updatedFile = req.body
   if _.has savedFiles, fileId
-    if updatedFile.name? and updatedFile.content? and not _.isEmpty updatedFile.name
-      # Validate if it's a duplicate (by name)
-      dup = _.find savedFiles, (file) -> return file.name? and file.name is updatedFile.name
-
-      if dup and dup.id is not updatedFile.id
-        res.json 405, {error: {
-          message: "File already exists with the name of '#{updatedFile.name}'."
-        }}
+    if isValidFile updatedFile
+      if isDuplicateFile updatedFile
+        handleDuplicate updatedFile
       else
         savedFiles[fileId] = updatedFile
         res.json savedFiles[fileId]
     else
-      badFields = {}
-      for field in ['name', 'content']
-        if not newFile[field]? or (field is 'name' and _.isEmpty(newFile[field]))
-          res.json 405, {error: {message: "'#{field}' is a required field."}}
+      handleInvalidFile updatedFile
   else
-    res.json 404, {error: {message: "No saved file on the server with an id of #{fileId}."}}
+    handleFileNotFound fileId
 
 # Route to delete a saved file by id
 app.delete '/files/:id', (req, res) ->
@@ -107,7 +109,7 @@ app.delete '/files/:id', (req, res) ->
     delete savedFiles[fileId]
     res.json deletedFile
   else
-    res.json 404, {error: {message: "No saved file on the server with an id of #{fileId}."}}
+    handleFileNotFound fileId
 
 # Start the server
 http.createServer(app).listen app.get('port'), ->
