@@ -1,9 +1,7 @@
-# Backbone.js Markdown Editor
-#
-# This application will demonstrate how to use [Backbone.js](http://documentcloud.github.com/backbone/)
-# and [Underscore.js](http://documentcloud.github.com/underscore/), both the client and server.  The server will be in
-# [CoffeeScript](http://coffeescript.org/) to also show that both of these libraries can be used with CoffeeScript and
-# JavaScript the same.
+# This is a very simple [Express.js](http://expressjs.com/) server used as an example backend for the web-based
+# [Markdown](http://daringfireball.net/projects/markdown/) editor written using
+# [AngularJS](http://angularjs.org/).  This backend is the minimal amount necessary to not only serve the web-based
+# client but also to expose a REST API for CRUD operations on the Markdown files managed in this application.
 
 # The [Express.js](http://expressjs.com/) module
 express = require('express')
@@ -20,7 +18,7 @@ savedFiles = {}
 lastId = 0
 # Function that returns if the file, based on its name, is a duplicate
 isDuplicateFile = (newFile) ->
-  (_.find savedFiles, (file) -> newFile.name? and newFile.name is file.name)?
+  (_.find savedFiles, (file) -> newFile.name? and newFile.name is file.name and newFile.id isnt file.id)?
 # Function that handles when there is a duplicate file attempting to be created/updated
 handleDuplicate = (res, file) ->
   res.json 405, {
@@ -38,7 +36,7 @@ handleInvalidFile = (res, file) ->
       res.json 405, {error: {message: "'#{field}' is a required field."}}
       return
 # Function that handles when there is a file requested that doesn't exist
-handleFileNotFound = (fileId) ->
+handleFileNotFound = (res, fileId) ->
   res.json 404, {error: {message: "No saved file on the server with an id of #{fileId}."}}
 
 # Configure Express.js (This is not a production-ready environment.)
@@ -70,7 +68,7 @@ app.post '/files', (req, res) ->
   newFile = req.body
 
   if isDuplicateFile newFile
-    handleDuplicate newFile
+    handleDuplicate res, newFile
   else
     if isValidFile newFile
       newFile['id'] = lastId += 1
@@ -78,12 +76,12 @@ app.post '/files', (req, res) ->
       savedFiles[newFile.id] = newFile
       res.json newFile
     else
-      handleInvalidFile newFile
+      handleInvalidFile res, newFile
 
 # Route to get a saved file by id
 app.get '/files/:id', (req, res) ->
   fileId = req.params.id
-  if _.has savedFiles, fileId then res.json(savedFiles[fileId]) else handleFileNotFound(fileId)
+  if _.has savedFiles, fileId then res.json(savedFiles[fileId]) else handleFileNotFound(res, fileId)
 
 # Route to update a saved file by id
 app.put '/files/:id', (req, res) ->
@@ -92,14 +90,14 @@ app.put '/files/:id', (req, res) ->
   if _.has savedFiles, fileId
     if isValidFile updatedFile
       if isDuplicateFile updatedFile
-        handleDuplicate updatedFile
+        handleDuplicate res, updatedFile
       else
         savedFiles[fileId] = updatedFile
         res.json savedFiles[fileId]
     else
-      handleInvalidFile updatedFile
+      handleInvalidFile res, updatedFile
   else
-    handleFileNotFound fileId
+    handleFileNotFound res, fileId
 
 # Route to delete a saved file by id
 app.delete '/files/:id', (req, res) ->
@@ -109,7 +107,7 @@ app.delete '/files/:id', (req, res) ->
     delete savedFiles[fileId]
     res.json deletedFile
   else
-    handleFileNotFound fileId
+    handleFileNotFound res, fileId
 
 # Start the server
 http.createServer(app).listen app.get('port'), ->
