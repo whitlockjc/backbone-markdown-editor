@@ -1,6 +1,6 @@
 # This is a very simple [Express.js](http://expressjs.com/) server used as an example backend for the web-based
 # [Markdown](http://daringfireball.net/projects/markdown/) editor written using
-# [AngularJS](http://angularjs.org/).  This backend is the minimal amount necessary to not only serve the web-based
+# [Backbone.js](http://backbonejs.org/).  This backend is the minimal amount necessary to not only serve the web-based
 # client but also to expose a REST API for CRUD operations on the Markdown files managed in this application.
 
 # The [Express.js](http://expressjs.com/) module
